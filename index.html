@@ -1164,6 +1164,27 @@
             }
         }
 
+        // Normalizar ID de estudiante (agregar 0 inicial si tiene 9 dígitos)
+        function normalizeStudentId(id) {
+            if (!id) return '';
+            
+            // Convertir a string y limpiar
+            const cleanId = String(id).replace(/\D/g, '');
+            
+            // Caso especial: ID de 6 dígitos (566542)
+            if (cleanId.length === 6) {
+                return cleanId;
+            }
+            
+            // Si tiene 9 dígitos, agregar 0 al inicio
+            if (cleanId.length === 9) {
+                return '0' + cleanId;
+            }
+            
+            // Si ya tiene 10 dígitos o cualquier otra longitud, devolver tal cual
+            return cleanId;
+        }
+
         // Process uploaded Excel files
         function processUploadedData() {
             const studentFile = document.getElementById('studentFile').files[0];
@@ -1350,31 +1371,58 @@
                 return;
             }
 
+            // Normalizar el ID buscado
+            const normalizedSearchId = normalizeStudentId(id);
+            
+            console.log('🔍 Búsqueda de estudiante:');
+            console.log('ID ingresado:', id);
+            console.log('ID normalizado:', normalizedSearchId);
+            console.log('Total estudiantes en base:', studentsData.length);
+
+            // Buscar en studentsData comparando IDs normalizados de AMBOS lados
             const student = studentsData.find(s => {
-                // Verificar que s.id existe y convertir ambos a string para comparar
-                const studentId = s.id ? String(s.id).replace(/\D/g, '') : ''; // Remover no-dígitos
-                const searchId = String(id).replace(/\D/g, '');
-                return studentId === searchId;
+                const studentId = normalizeStudentId(s.id);
+                console.log(`Comparando: ${studentId} === ${normalizedSearchId}?`, studentId === normalizedSearchId);
+                return studentId === normalizedSearchId;
             });
             
             if (student) {
+                console.log('✅ Estudiante encontrado:', student);
+                
+                // Usar el ID normalizado
+                const finalId = normalizedSearchId;
+                
+                // Actualizar el ID del estudiante si era diferente
+                student.id = finalId;
+                
                 currentStudent = {...student}; // Clonar el objeto
                 document.getElementById('newStudentForm').classList.add('hidden');
                 updateStepIndicator(2);
                 document.getElementById('searchStep').classList.add('hidden');
                 document.getElementById('confirmStep').classList.remove('hidden');
                 
+                // Mostrar si el ID fue normalizado
+                let normalizationNote = '';
+                if (id !== finalId) {
+                    if (id.length === 10 && finalId.startsWith('0')) {
+                        normalizationNote = '<p style="color: #10b981; font-size: 12px; margin-top: 10px;">✓ ID encontrado correctamente</p>';
+                    } else if (id.length === 9) {
+                        normalizationNote = '<p style="color: #10b981; font-size: 12px; margin-top: 10px;">✓ ID normalizado (0 agregado al inicio)</p>';
+                    }
+                }
+                
                 // Display student data
                 document.getElementById('studentData').innerHTML = `
                     <h3>Datos Encontrados:</h3>
                     <div class="data-row">
                         <span class="data-label">ID / Cédula:</span>
-                        <span class="data-value">${student.id}</span>
+                        <span class="data-value">${finalId}</span>
                     </div>
                     <div class="data-row">
                         <span class="data-label">Nombre Completo:</span>
                         <span class="data-value">${student.nombreCompleto}</span>
                     </div>
+                    ${normalizationNote}
                 `;
                 
                 // Populate edit fields
@@ -1383,11 +1431,13 @@
                 
                 document.getElementById('searchResult').innerHTML = '';
             } else {
+                console.log('❌ No se encontró el estudiante');
+                
                 // No se encontró - mostrar opción de registro
                 document.getElementById('newStudentForm').classList.remove('hidden');
-                document.getElementById('newStudentId').value = id;
+                document.getElementById('newStudentId').value = normalizedSearchId;
                 showAlert('searchResult', 
-                    `No se encontró el ID / Cédula <strong>${id}</strong>. Por favor completa el formulario abajo para registrarte.`, 
+                    `No se encontró el ID / Cédula <strong>${normalizedSearchId}</strong>. Por favor completa el formulario abajo para registrarte.`, 
                     'warning');
             }
         }
@@ -1436,9 +1486,12 @@
                 return;
             }
 
+            // Normalizar ID antes de crear el estudiante
+            const normalizedId = normalizeStudentId(id);
+
             // Crear nuevo estudiante con formato oración
             const newStudent = {
-                id: id,
+                id: normalizedId,
                 nombreCompleto: toSentenceCase(name),
                 correo: email,
                 telefono: phone
@@ -1539,9 +1592,11 @@
             currentStudent.nivelPractica = nivelPractica;
             
             // IMPORTANTE: Actualizar también en studentsData para que persista
-            const studentIndex = studentsData.findIndex(s => 
-                s.id && String(s.id).replace(/\D/g, '') === String(currentStudent.id).replace(/\D/g, '')
-            );
+            const studentIndex = studentsData.findIndex(s => {
+                const studentId = normalizeStudentId(s.id);
+                const currentId = normalizeStudentId(currentStudent.id);
+                return studentId === currentId;
+            });
             
             if (studentIndex !== -1) {
                 studentsData[studentIndex].correo = email;
@@ -1806,14 +1861,14 @@
                 return;
             }
 
-            // Limpiar ID del estudiante (solo números)
-            const cleanStudentId = currentStudent.id ? String(currentStudent.id).replace(/\D/g, '') : '';
+            // Normalizar ID del estudiante (agregar 0 si es necesario)
+            const normalizedStudentId = normalizeStudentId(currentStudent.id);
 
             // Create submission record con formato oración
             const submission = {
                 timestamp: new Date().toISOString(),
                 fecha_hora: new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }),
-                estudiante_id: cleanStudentId,
+                estudiante_id: normalizedStudentId,
                 estudiante_nombre_completo: toSentenceCase(currentStudent.nombreCompleto),
                 estudiante_correo: currentStudent.correo,
                 estudiante_telefono: currentStudent.telefono,
@@ -1829,9 +1884,10 @@
             };
 
             // Check for duplicates and keep most recent
-            const existingIndex = submissionsData.findIndex(s => 
-                s.estudiante_id === submission.estudiante_id
-            );
+            const existingIndex = submissionsData.findIndex(s => {
+                const submissionId = normalizeStudentId(s.estudiante_id);
+                return submissionId === normalizedStudentId;
+            });
 
             if (existingIndex !== -1) {
                 submissionsData[existingIndex] = submission;
