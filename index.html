@@ -3,633 +3,390 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Prácticas Estudiantiles</title>
+    <title>Sistema de Gestión de Prácticas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* ESTILOS CSS - Diseño Responsivo y Moderno */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 30px; text-align: center; position: relative; }
-        .header h1 { color: #667eea; margin-bottom: 10px; font-size: 24px; }
+        /* Estilos optimizados */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        h1, h2, h3 { color: #4a5568; margin-bottom: 15px; text-align: center; }
+        h1 { color: #667eea; }
         
-        /* Botón Admin discreto */
-        .admin-login-btn { position: absolute; top: 20px; right: 20px; padding: 8px 16px; background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3); border-radius: 6px; color: #667eea; font-size: 13px; cursor: pointer; transition: all 0.3s; font-weight: 500; }
-        .admin-login-btn:hover { background: rgba(102, 126, 234, 0.2); border-color: #667eea; transform: translateY(-1px); }
-        
-        /* Áreas de contenido */
-        .content-area { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; }
-        .content-area.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .section { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .section:last-child { border-bottom: none; }
-        .section h2 { color: #667eea; margin-bottom: 20px; font-size: 20px; }
-        
-        /* Upload areas */
-        .upload-area { border: 2px dashed #667eea; border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 15px; background: #f8f9ff; transition: all 0.3s; }
-        .upload-area:hover { border-color: #764ba2; background: #f0f2ff; }
-        .upload-area input[type="file"] { display: none; }
-        .file-info { margin-top: 10px; font-size: 13px; color: #666; }
-        
-        /* Formularios */
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; color: #333; font-weight: 600; font-size: 14px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: all 0.3s; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        
-        /* Botones */
-        .btn { padding: 12px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-right: 10px; display: inline-block; }
+        .btn { display: inline-block; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; transition: 0.3s; }
         .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5a6fd6; transform: translateY(-2px); }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn-secondary:hover { background: #5a6268; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-success:hover { background: #218838; }
-        .upload-btn { background: #667eea; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-secondary { background: #cbd5e0; color: #4a5568; }
         
-        /* Resultados y Tablas */
-        .result-card { background: #f8f9ff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #667eea; }
-        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; }
-        .data-label { font-weight: 600; color: #555; }
-        
-        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        
-        /* Pasos */
-        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; }
-        .step-indicator::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 2px; background: #e0e0e0; z-index: 0; }
-        .step { flex: 1; text-align: center; position: relative; z-index: 1; }
-        .step-number { width: 40px; height: 40px; border-radius: 50%; background: #e0e0e0; color: #666; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 5px; background: white; border: 2px solid #e0e0e0; }
-        .step.active .step-number { background: #667eea; color: white; border-color: #667eea; }
-        .step.completed .step-number { background: #28a745; color: white; border-color: #28a745; }
-        .step-label { font-size: 12px; color: #666; font-weight: 600; }
-        
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #e2e8f0; border-radius: 8px; }
         .hidden { display: none; }
         
-        /* Admin Stats */
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
-        .stat-card { background: white; border: 1px solid #eee; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-card h3 { color: #667eea; font-size: 28px; margin-bottom: 5px; }
-        
-        /* Preview Table */
-        .data-preview { max-height: 300px; overflow-y: auto; margin-top: 15px; border: 1px solid #eee; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f8f9ff; padding: 10px; text-align: left; position: sticky; top: 0; }
-        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        .upload-box { border: 2px dashed #cbd5e0; padding: 20px; text-align: center; margin-bottom: 15px; border-radius: 8px; }
+        .status-msg { padding: 10px; margin: 10px 0; border-radius: 5px; text-align: center; font-weight: bold; }
+        .success { background: #c6f6d5; color: #22543d; }
+        .error { background: #fed7d7; color: #822727; }
+        .info { background: #bee3f8; color: #2a4365; }
+
+        /* Steps */
+        .step-dots { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
+        .dot { width: 12px; height: 12px; background: #e2e8f0; border-radius: 50%; }
+        .dot.active { background: #667eea; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <button class="admin-login-btn" onclick="switchMode('admin')">⚙️ Admin</button>
-            <h1>Gestión de Prácticas</h1>
-            <p>Universidad Politécnica Salesiana - Educación Intercultural Bilingüe</p>
+
+<div class="container">
+    <div style="text-align: right;">
+        <button onclick="toggleAdmin()" style="background:none; border:none; color:#cbd5e0; cursor:pointer;">⚙️</button>
+    </div>
+    
+    <h1>Gestión de Prácticas</h1>
+    <div id="loadingInfo" class="status-msg info hidden">⏳ Sincronizando datos con la nube...</div>
+
+    <div id="studentView">
+        <div class="step-dots">
+            <div id="d1" class="dot active"></div><div id="d2" class="dot"></div><div id="d3" class="dot"></div><div id="d4" class="dot"></div>
         </div>
 
-        <div id="admin-panel" class="content-area">
-            <div id="adminLogin" class="section">
-                <h2>🔐 Acceso Administrativo</h2>
-                <div style="max-width: 400px; margin: 0 auto;">
-                    <div class="form-group">
-                        <label>ID:</label>
-                        <input type="text" id="adminId">
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña:</label>
-                        <input type="password" id="adminPassword">
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="adminLogin()">Ingresar</button>
-                    <div id="loginError" style="margin-top: 10px;"></div>
-                </div>
-            </div>
-
-            <div id="adminContent" class="hidden">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>Panel de Control</h3>
-                    <button class="btn btn-secondary" onclick="adminLogout()">Salir</button>
-                </div>
-
-                <div class="section">
-                    <h2>1. Configuración de Conexión</h2>
-                    <div class="alert alert-info">Pega aquí la URL de tu Web App de Google Apps Script (Debe terminar en /exec)</div>
-                    <div class="form-group">
-                        <input type="url" id="googleSheetsUrl" placeholder="https://script.google.com/macros/s/..../exec">
-                    </div>
-                    <button class="btn btn-primary" onclick="saveGoogleSheetsUrl()">💾 Guardar URL</button>
-                </div>
-
-                <div class="section">
-                    <h2>2. Carga Masiva de Datos</h2>
-                    <div class="upload-area">
-                        <p>📂 <strong>Estudiantes</strong> (Excel)</p>
-                        <input type="file" id="studentFile" accept=".xlsx, .xls">
-                        <button class="upload-btn" onclick="document.getElementById('studentFile').click()">Seleccionar Archivo</button>
-                        <div id="studentFileInfo" class="file-info"></div>
-                    </div>
-                    <div class="upload-area">
-                        <p>🏫 <strong>Escuelas</strong> (Excel)</p>
-                        <input type="file" id="schoolFile" accept=".xlsx, .xls">
-                        <button class="upload-btn" onclick="document.getElementById('schoolFile').click()">Seleccionar Archivo</button>
-                        <div id="schoolFileInfo" class="file-info"></div>
-                    </div>
-                    <button class="btn btn-success hidden" id="processBtn" onclick="processUploadedData()">🚀 Procesar y Sincronizar con Google</button>
-                </div>
-
-                <div class="section">
-                    <h2>3. Estado del Sistema</h2>
-                    <div class="stats">
-                        <div class="stat-card"><h3 id="statStudents">0</h3><p>Estudiantes</p></div>
-                        <div class="stat-card"><h3 id="statSchools">0</h3><p>Escuelas</p></div>
-                        <div class="stat-card"><h3 id="statSubmissions">0</h3><p>Registros</p></div>
-                    </div>
-                    <div id="loadedDataPreview"></div>
-                </div>
-                
-                <div class="section">
-                    <button class="btn btn-success" onclick="exportData()">📥 Descargar Reporte CSV</button>
-                </div>
-            </div>
+        <div id="step1">
+            <h3>Paso 1: Identificación</h3>
+            <label>Número de Cédula / ID:</label>
+            <input type="text" id="searchId" placeholder="Ingresa tu ID aquí">
+            <button class="btn btn-primary" onclick="buscarEstudiante()">Buscar</button>
         </div>
 
-        <div id="student-panel" class="content-area active">
-            <div class="step-indicator">
-                <div class="step active" id="step1"><div class="step-number">1</div><div class="step-label">ID</div></div>
-                <div class="step" id="step2"><div class="step-number">2</div><div class="step-label">Datos</div></div>
-                <div class="step" id="step3"><div class="step-number">3</div><div class="step-label">Escuela</div></div>
-                <div class="step" id="step4"><div class="step-number">4</div><div class="step-label">Rector</div></div>
-                <div class="step" id="step5"><div class="step-number">5</div><div class="step-label">Fin</div></div>
-            </div>
+        <div id="step2" class="hidden">
+            <h3>Paso 2: Tus Datos</h3>
+            <div id="studentInfoDisplay" style="background:#f7fafc; padding:15px; border-radius:8px; margin-bottom:15px;"></div>
+            
+            <label>Correo Personal:</label>
+            <input type="email" id="email">
+            <label>Celular:</label>
+            <input type="tel" id="phone">
+            <label>Centro de Apoyo:</label>
+            <select id="center">
+                <option value="">Selecciona...</option>
+                <option>Cayambe</option><option>Latacunga</option><option>Otavalo</option><option>Riobamba</option>
+                <option>Quito</option><option>Guayaquil</option><option>Cuenca</option>
+            </select>
+            <label>Nivel:</label>
+            <select id="level">
+                <option value="">Selecciona...</option>
+                <option>2do Nivel</option><option>4to Nivel</option><option>6to Nivel</option><option>8vo Nivel</option>
+            </select>
+            <button class="btn btn-primary" onclick="validarPaso2()">Siguiente</button>
+            <button class="btn btn-secondary" onclick="setStep(1)">Atrás</button>
+        </div>
 
-            <div id="step1-content" class="section">
-                <div id="loadingIndicator" class="alert alert-info" style="display:none;">⏳ Conectando con la base de datos...</div>
-                <h2>Identificación</h2>
-                <div class="form-group">
-                    <label>Ingresa tu número de cédula o ID:</label>
-                    <input type="text" id="studentIdInput" placeholder="Ej: 010xxxxxxx">
-                </div>
-                <button class="btn btn-primary" onclick="searchStudent()">Buscar Estudiante</button>
-                <div id="searchError" style="margin-top: 10px;"></div>
-            </div>
+        <div id="step3" class="hidden">
+            <h3>Paso 3: Institución</h3>
+            <label>Código AMIE:</label>
+            <input type="text" id="amie">
+            <button class="btn btn-primary" onclick="buscarEscuela()">Buscar Escuela</button>
+            <button class="btn btn-secondary" onclick="setStep(2)">Atrás</button>
+        </div>
 
-            <div id="step2-content" class="section hidden">
-                <h2>Datos Personales</h2>
-                <div class="result-card" id="studentDataDisplay"></div>
-                
-                <div class="form-group">
-                    <label>Correo Personal: <span style="color:red">*</span></label>
-                    <input type="email" id="studentEmail" required>
-                </div>
-                <div class="form-group">
-                    <label>Celular (WhatsApp): <span style="color:red">*</span></label>
-                    <input type="tel" id="studentPhone" maxlength="10" placeholder="09xxxxxxxx">
-                </div>
-                <div class="form-group">
-                    <label>Centro de Apoyo: <span style="color:red">*</span></label>
-                    <select id="studentCenter">
-                        <option value="">-- Seleccionar --</option>
-                        <option value="Cayambe">Cayambe</option>
-                        <option value="Latacunga">Latacunga</option>
-                        <option value="Otavalo">Otavalo</option>
-                        <option value="Riobamba">Riobamba</option>
-                        <option value="Quito">Quito</option>
-                        <option value="Guayaquil">Guayaquil</option>
-                        <option value="Cuenca">Cuenca</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nivel y Práctica: <span style="color:red">*</span></label>
-                    <select id="studentLevel">
-                        <option value="">-- Seleccionar --</option>
-                        <option value="2do Nivel - Acercamiento">2do Nivel - Acercamiento</option>
-                        <option value="4to Nivel - Modelos Pedagógicos">4to Nivel - Modelos Pedagógicos</option>
-                        <option value="6to Nivel - Servicio Comunitario">6to Nivel - Servicio Comunitario</option>
-                        <option value="8vo Nivel - Profesional">8vo Nivel - Profesional</option>
-                    </select>
-                </div>
-                <button class="btn btn-secondary" onclick="showStep(1)">Atrás</button>
-                <button class="btn btn-primary" onclick="validateStep2()">Siguiente</button>
-            </div>
-
-            <div id="step3-content" class="section hidden">
-                <h2>Datos de la Institución</h2>
-                <div class="form-group">
-                    <label>Código AMIE de la Escuela:</label>
-                    <input type="text" id="schoolAmieInput" placeholder="Ej: 17H00xxx">
-                </div>
-                <button class="btn btn-primary" onclick="searchSchool()">Buscar Escuela</button>
-                <button class="btn btn-secondary" onclick="showStep(2)">Atrás</button>
-                <div id="schoolError" style="margin-top: 10px;"></div>
-            </div>
-
-            <div id="step4-content" class="section hidden">
-                <h2>Confirmación de Escuela</h2>
-                <div class="result-card" id="schoolDataDisplay"></div>
-                
-                <h3>Datos de la Autoridad (Rector/Líder)</h3>
-                <div class="form-group">
-                    <label>Nombre Completo de la Autoridad: <span style="color:red">*</span></label>
-                    <input type="text" id="authName">
-                </div>
-                <div class="form-group">
-                    <label>Cargo: <span style="color:red">*</span></label>
-                    <select id="authRole">
-                        <option value="Rector/a">Rector/a</option>
-                        <option value="Director/a">Director/a</option>
-                        <option value="Líder Educativo">Líder Educativo</option>
-                        <option value="Vicerrector/a">Vicerrector/a</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Teléfono de Contacto Autoridad: <span style="color:red">*</span></label>
-                    <input type="tel" id="authPhone" maxlength="10">
-                </div>
-                
-                <button class="btn btn-secondary" onclick="showStep(3)">Atrás</button>
-                <button class="btn btn-success" onclick="submitFinalForm()">✅ Finalizar y Enviar</button>
-            </div>
-
-            <div id="step5-content" class="section hidden">
-                <div class="alert alert-success">
-                    <h2>¡Registro Exitoso!</h2>
-                    <p>Tus datos han sido guardados correctamente en el sistema.</p>
-                </div>
-                <button class="btn btn-primary" onclick="location.reload()">Nuevo Registro</button>
-            </div>
+        <div id="step4" class="hidden">
+            <h3>Paso 4: Confirmación</h3>
+            <div id="schoolInfoDisplay" style="background:#f7fafc; padding:15px; border-radius:8px; margin-bottom:15px;"></div>
+            
+            <label>Nombre Autoridad (Rector/Líder):</label>
+            <input type="text" id="authName">
+            <label>Cargo:</label>
+            <select id="authRole">
+                <option>Rector/a</option><option>Director/a</option><option>Líder</option>
+            </select>
+            <label>Teléfono Autoridad:</label>
+            <input type="tel" id="authPhone">
+            
+            <button class="btn btn-success" onclick="enviarFormulario()">✅ Enviar Registro</button>
+            <button class="btn btn-secondary" onclick="setStep(3)">Atrás</button>
         </div>
     </div>
 
-    <script>
-        // --- CONFIGURACIÓN Y VARIABLES ---
-        let GOOGLE_SHEETS_URL = localStorage.getItem('googleSheetsUrl') || '';
-        const ADMIN_ID = '1722769070';
-        const ADMIN_PASSWORD = '1722769070';
+    <div id="adminView" class="hidden">
+        <h2>Panel Administrativo</h2>
+        <input type="password" id="adminPass" placeholder="Contraseña Admin">
+        <button class="btn btn-secondary" onclick="checkAdmin()">Ingresar</button>
         
-        // Memoria local
-        let studentsDB = [];
-        let schoolsDB = [];
-        let submissionsDB = [];
-        
-        // Estado temporal del formulario
-        let currentStudent = null;
-        let currentSchool = null;
-
-        // AL CARGAR LA PÁGINA
-        window.onload = function() {
-            loadFromLocalStorage();
-            checkAdminSession();
+        <div id="adminPanelContent" class="hidden" style="margin-top:20px;">
+            <label>URL de Google Apps Script:</label>
+            <input type="text" id="scriptUrl" placeholder="https://script.google.com/.../exec">
+            <button class="btn btn-primary" onclick="saveUrl()">Guardar URL</button>
             
-            // Si hay URL configurada, descargamos datos frescos automáticamente
-            if(GOOGLE_SHEETS_URL) {
-                downloadDataFromCloud();
-            } else {
-                console.log("⚠️ URL no configurada. Solo datos locales.");
-            }
+            <hr style="margin:20px 0;">
+            
+            <div class="upload-box">
+                <p>1. Archivo Estudiantes (Excel)</p>
+                <input type="file" id="fileStudents" accept=".xlsx">
+            </div>
+            
+            <div class="upload-box">
+                <p>2. Archivo Escuelas (Excel)</p>
+                <input type="file" id="fileSchools" accept=".xlsx">
+            </div>
+            
+            <button class="btn btn-success" onclick="procesarArchivos()">🚀 Subir a la Nube</button>
+            <div id="uploadStatus" class="status-msg hidden"></div>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="toggleAdmin()" style="margin-top:20px;">Volver al Inicio</button>
+    </div>
+
+</div>
+
+<script>
+    // --- LÓGICA DEL SISTEMA ---
+    let DB_STUDENTS = [];
+    let DB_SCHOOLS = [];
+    let TEMP_DATA = {};
+    let URL_SCRIPT = localStorage.getItem('script_url') || '';
+
+    // Al iniciar: Intentar descargar datos de la nube
+    window.onload = () => {
+        if(URL_SCRIPT) {
+            descargarDatosNube();
+        } else {
+            console.log("Falta URL del script");
+        }
+    };
+
+    // --- COMUNICACIÓN CON GOOGLE (GET y POST) ---
+    
+    // 1. DESCARGA (GET) - Para que funcione en móviles
+    async function descargarDatosNube() {
+        document.getElementById('loadingInfo').classList.remove('hidden');
+        try {
+            // Usamos fetch GET simple para evitar CORS preflight complex
+            const resEst = await fetch(`${URL_SCRIPT}?operation=loadStudents`);
+            const jsonEst = await resEst.json();
+            if(jsonEst.status === 'success') DB_STUDENTS = jsonEst.data;
+
+            const resEsc = await fetch(`${URL_SCRIPT}?operation=loadSchools`);
+            const jsonEsc = await resEsc.json();
+            if(jsonEsc.status === 'success') DB_SCHOOLS = jsonEsc.data;
+
+            console.log(`Datos cargados: ${DB_STUDENTS.length} estudiantes, ${DB_SCHOOLS.length} escuelas.`);
+            document.getElementById('loadingInfo').classList.add('hidden');
+        } catch (e) {
+            console.error("Error descarga:", e);
+            // Si falla, no mostramos error al usuario, solo en consola
+            document.getElementById('loadingInfo').innerText = "Modo Offline (Datos locales)";
+        }
+    }
+
+    // 2. SUBIDA (POST) - Para el Admin
+    async function subirDatosNube(tipo, datos) {
+        const payload = {
+            operation: tipo === 'estudiantes' ? 'saveStudents' : 'saveSchools',
+            [tipo === 'estudiantes' ? 'students' : 'schools']: datos
         };
 
-        // --- 1. COMUNICACIÓN CON GOOGLE SHEETS (SOLUCIÓN CORS) ---
-        // Usamos POST + text/plain para evitar errores Preflight (OPTIONS 405)
+        // Truco text/plain para evitar CORS en POST
+        const res = await fetch(URL_SCRIPT, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
+        return await res.json();
+    }
+
+    // 3. ENVIAR FORMULARIO (POST)
+    async function enviarRegistroNube(datos) {
+        const res = await fetch(URL_SCRIPT, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(datos)
+        });
+        return await res.json();
+    }
+
+    // --- FUNCIONES DE ESTUDIANTE ---
+
+    function buscarEstudiante() {
+        const id = document.getElementById('searchId').value.trim();
+        // Buscamos en memoria (que se llenó al cargar la página)
+        const est = DB_STUDENTS.find(e => String(e.id).trim() === id);
         
-        async function apiRequest(data) {
-            if(!GOOGLE_SHEETS_URL) return null;
-            
-            try {
-                const response = await fetch(GOOGLE_SHEETS_URL, {
-                    method: 'POST',
-                    mode: 'cors', // Clave para leer respuesta
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8' // Clave para evitar bloqueo
-                    },
-                    body: JSON.stringify(data)
-                });
-                return await response.json();
-            } catch (error) {
-                console.error("Error de API:", error);
-                return { result: 'error', message: error.toString() };
-            }
+        if (est) {
+            TEMP_DATA.estudiante = est;
+            document.getElementById('studentInfoDisplay').innerHTML = `
+                <strong>${est.nombreCompleto}</strong><br>ID: ${est.id}<br>${est.correo}
+            `;
+            // Prellenar
+            document.getElementById('email').value = est.correo || '';
+            document.getElementById('phone').value = est.telefono || '';
+            setStep(2);
+        } else {
+            alert("Estudiante no encontrado. Si estás en celular, asegúrate de tener internet al abrir la página.");
         }
+    }
 
-        async function downloadDataFromCloud() {
-            const indicator = document.getElementById('loadingIndicator');
-            if(indicator) indicator.style.display = 'block';
-
-            // 1. Descargar Estudiantes
-            const resStudents = await apiRequest({ operation: 'loadStudents' });
-            if(resStudents && resStudents.result === 'success') {
-                studentsDB = resStudents.data;
-                console.log(`✅ ${studentsDB.length} estudiantes descargados.`);
-            }
-
-            // 2. Descargar Escuelas
-            const resSchools = await apiRequest({ operation: 'loadSchools' });
-            if(resSchools && resSchools.result === 'success') {
-                schoolsDB = resSchools.data;
-                console.log(`✅ ${schoolsDB.length} escuelas descargadas.`);
-            }
-
-            saveToLocalStorage();
-            updateStats();
-            if(indicator) indicator.style.display = 'none';
+    function buscarEscuela() {
+        const amie = document.getElementById('amie').value.trim().toUpperCase();
+        const esc = DB_SCHOOLS.find(e => String(e.id).toUpperCase().trim() === amie);
+        
+        if (esc) {
+            TEMP_DATA.escuela = esc;
+            document.getElementById('schoolInfoDisplay').innerHTML = `
+                <strong>${esc.nombre}</strong><br>AMIE: ${esc.id}<br>${esc.distrito}
+            `;
+            setStep(4);
+        } else {
+            alert("Escuela no encontrada.");
         }
+    }
 
-        async function syncDataToCloud(type, dataArray) {
-            const res = await apiRequest({
-                operation: type === 'students' ? 'saveStudents' : 'saveSchools',
-                [type]: dataArray
-            });
-            if(res && res.result === 'success') {
-                alert(`Sincronización exitosa: ${res.message}`);
-            } else {
-                alert("Error al sincronizar con la nube.");
-            }
+    function validarPaso2() {
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const center = document.getElementById('center').value;
+        const level = document.getElementById('level').value;
+        
+        if(!email.includes('@') || phone.length < 9 || !center || !level) {
+            return alert("Completa todos los campos correctamente.");
         }
+        
+        TEMP_DATA.extra = { email, phone, center, level };
+        setStep(3);
+    }
 
-        // --- 2. LÓGICA DEL ESTUDIANTE ---
+    async function enviarFormulario() {
+        const authName = document.getElementById('authName').value;
+        const authRole = document.getElementById('authRole').value;
+        const authPhone = document.getElementById('authPhone').value;
+        
+        if(!authName || !authPhone) return alert("Completa los datos de la autoridad");
 
-        function searchStudent() {
-            const id = document.getElementById('studentIdInput').value.trim();
-            // Búsqueda insensible a tipos (string/number)
-            currentStudent = studentsDB.find(s => String(s.id).trim() === id);
+        const registro = {
+            fecha_hora: new Date().toLocaleString(),
+            estudiante_id: TEMP_DATA.estudiante.id,
+            estudiante_nombre_completo: TEMP_DATA.estudiante.nombreCompleto,
+            estudiante_correo: TEMP_DATA.extra.email,
+            estudiante_telefono: TEMP_DATA.extra.phone,
+            estudiante_centro_apoyo: TEMP_DATA.extra.center,
+            estudiante_nivel_practica: TEMP_DATA.extra.level,
+            escuela_amie: TEMP_DATA.escuela.id,
+            escuela_nombre: TEMP_DATA.escuela.nombre,
+            escuela_distrito: TEMP_DATA.escuela.distrito,
+            escuela_sistema: TEMP_DATA.escuela.sistema,
+            autoridad_nombre: authName,
+            autoridad_cargo: authRole,
+            autoridad_telefono: authPhone
+        };
 
-            if (currentStudent) {
-                document.getElementById('studentDataDisplay').innerHTML = `
-                    <div class="data-row"><span class="data-label">ID:</span> <span>${currentStudent.id}</span></div>
-                    <div class="data-row"><span class="data-label">Nombre:</span> <span>${currentStudent.nombreCompleto}</span></div>
-                `;
-                // Prellenar datos si existen
-                document.getElementById('studentEmail').value = currentStudent.correo || '';
-                document.getElementById('studentPhone').value = currentStudent.telefono || '';
-                
-                document.getElementById('searchError').innerHTML = '';
-                showStep(2);
-            } else {
-                showAlert('searchError', '❌ ID no encontrado. Contacta al administrador.', 'error');
-            }
-        }
+        const btn = document.querySelector('#step4 .btn-success');
+        btn.innerText = "Enviando...";
+        btn.disabled = true;
 
-        function validateStep2() {
-            const email = document.getElementById('studentEmail').value;
-            const phone = document.getElementById('studentPhone').value;
-            const center = document.getElementById('studentCenter').value;
-            const level = document.getElementById('studentLevel').value;
-
-            if(!email.includes('@') || phone.length < 9 || !center || !level) {
-                alert("Por favor completa todos los campos obligatorios correctamente.");
-                return;
-            }
-
-            // Guardar datos temporales
-            currentStudent.correo = email;
-            currentStudent.telefono = phone;
-            currentStudent.centroApoyo = center;
-            currentStudent.nivelPractica = level;
-            
-            showStep(3);
-        }
-
-        function searchSchool() {
-            const amie = document.getElementById('schoolAmieInput').value.trim().toUpperCase();
-            currentSchool = schoolsDB.find(s => String(s.id).toUpperCase().trim() === amie);
-
-            if (currentSchool) {
-                document.getElementById('schoolDataDisplay').innerHTML = `
-                    <div class="data-row"><span class="data-label">AMIE:</span> <span>${currentSchool.id}</span></div>
-                    <div class="data-row"><span class="data-label">Nombre:</span> <span>${currentSchool.nombre}</span></div>
-                    <div class="data-row"><span class="data-label">Distrito:</span> <span>${currentSchool.distrito}</span></div>
-                    <div class="data-row"><span class="data-label">Sistema:</span> <span>${currentSchool.sistema}</span></div>
-                `;
-                document.getElementById('schoolError').innerHTML = '';
-                showStep(4);
-            } else {
-                showAlert('schoolError', '❌ Escuela no encontrada. Verifica el código AMIE.', 'error');
-            }
-        }
-
-        async function submitFinalForm() {
-            const authName = document.getElementById('authName').value;
-            const authRole = document.getElementById('authRole').value;
-            const authPhone = document.getElementById('authPhone').value;
-
-            if(!authName || !authPhone) {
-                alert("Completa los datos de la autoridad.");
-                return;
-            }
-
-            // Construir objeto final
-            const finalRecord = {
-                timestamp: new Date().toISOString(),
-                fecha_hora: new Date().toLocaleString(),
-                estudiante_id: currentStudent.id,
-                estudiante_nombre_completo: currentStudent.nombreCompleto,
-                estudiante_correo: currentStudent.correo,
-                estudiante_telefono: currentStudent.telefono,
-                estudiante_centro_apoyo: currentStudent.centroApoyo,
-                estudiante_nivel_practica: currentStudent.nivelPractica,
-                escuela_amie: currentSchool.id,
-                escuela_nombre: currentSchool.nombre,
-                escuela_distrito: currentSchool.distrito,
-                escuela_sistema: currentSchool.sistema,
-                autoridad_nombre: authName,
-                autoridad_cargo: authRole,
-                autoridad_telefono: authPhone
-            };
-
-            // Guardar localmente
-            submissionsDB.push(finalRecord);
-            saveToLocalStorage();
-
-            // Enviar a Google
-            const btn = document.querySelector('#step4-content .btn-success');
-            const originalText = btn.innerText;
-            btn.innerText = "Enviando...";
-            btn.disabled = true;
-
-            const res = await apiRequest(finalRecord); // El backend detecta que es un submit por defecto
-            
-            btn.innerText = originalText;
-            btn.disabled = false;
-
-            if(res && res.result === 'success') {
-                showStep(5);
-            } else {
-                alert("Hubo un error de conexión, pero tus datos se guardaron localmente.");
-                showStep(5);
-            }
-        }
-
-        // --- 3. LÓGICA DE ADMINISTRADOR ---
-
-        function adminLogin() {
-            const u = document.getElementById('adminId').value;
-            const p = document.getElementById('adminPassword').value;
-            if(u === ADMIN_ID && p === ADMIN_PASSWORD) {
-                localStorage.setItem('adminLoggedIn', 'true');
-                checkAdminSession();
-            } else {
-                showAlert('loginError', 'Credenciales incorrectas', 'error');
-            }
-        }
-
-        function checkAdminSession() {
-            if(localStorage.getItem('adminLoggedIn') === 'true') {
-                document.getElementById('adminLogin').classList.add('hidden');
-                document.getElementById('adminContent').classList.remove('hidden');
-                document.getElementById('googleSheetsUrl').value = GOOGLE_SHEETS_URL;
-                updateStats();
-            }
-        }
-
-        function adminLogout() {
-            localStorage.removeItem('adminLoggedIn');
+        try {
+            await enviarRegistroNube(registro);
+            alert("✅ ¡Registro enviado correctamente!");
             location.reload();
+        } catch (e) {
+            alert("Hubo un error de conexión, intenta de nuevo.");
+            btn.innerText = "Reintentar";
+            btn.disabled = false;
         }
+    }
 
-        function saveGoogleSheetsUrl() {
-            const url = document.getElementById('googleSheetsUrl').value;
-            if(!url.endsWith('/exec')) {
-                alert("La URL debe terminar en /exec");
-                return;
-            }
-            localStorage.setItem('googleSheetsUrl', url);
-            GOOGLE_SHEETS_URL = url;
-            alert("URL Guardada. Intentando conectar...");
-            downloadDataFromCloud();
+    // --- FUNCIONES DE ADMIN ---
+
+    function toggleAdmin() {
+        document.getElementById('studentView').classList.toggle('hidden');
+        document.getElementById('adminView').classList.toggle('hidden');
+    }
+
+    function checkAdmin() {
+        if(document.getElementById('adminPass').value === '1722769070') {
+            document.getElementById('adminPanelContent').classList.remove('hidden');
+        } else {
+            alert("Contraseña incorrecta");
         }
+    }
 
-        // Procesamiento de Excel (SheetJS)
-        function processUploadedData() {
-            const fileS = document.getElementById('studentFile').files[0];
-            const fileSc = document.getElementById('schoolFile').files[0];
+    function saveUrl() {
+        const url = document.getElementById('scriptUrl').value;
+        localStorage.setItem('script_url', url);
+        URL_SCRIPT = url;
+        alert("URL Guardada. Refresca la página.");
+    }
 
-            if(!fileS || !fileSc) {
-                alert("Por favor sube AMBOS archivos.");
-                return;
-            }
-
-            const readerS = new FileReader();
-            readerS.onload = (e) => {
-                const wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
-                const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                
-                // Mapeo inteligente
-                studentsDB = data.map(row => ({
-                    id: String(findCol(row, ['id', 'cedula', 'identificacion']) || ''),
-                    nombreCompleto: findCol(row, ['nombre', 'estudiante', 'nombres']) || '',
-                    correo: findCol(row, ['correo', 'email']) || '',
-                    telefono: String(findCol(row, ['telefono', 'celular']) || '')
-                }));
-
-                // Ahora escuelas
-                const readerSc = new FileReader();
-                readerSc.onload = (e2) => {
-                    const wb2 = XLSX.read(new Uint8Array(e2.target.result), {type: 'array'});
-                    const data2 = XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]]);
-                    
-                    schoolsDB = data2.map(row => ({
-                        id: String(findCol(row, ['amie', 'codigo', 'id']) || ''),
-                        nombre: findCol(row, ['nombre', 'institucion', 'escuela']) || '',
-                        distrito: findCol(row, ['distrito']) || '',
-                        sistema: findCol(row, ['sistema', 'sostenimiento']) || ''
-                    }));
-
-                    saveToLocalStorage();
-                    updateStats();
-                    
-                    // Sincronizar con Google
-                    syncDataToCloud('students', studentsDB);
-                    syncDataToCloud('schools', schoolsDB);
-                };
-                readerSc.readAsArrayBuffer(fileSc);
-            };
-            readerS.readAsArrayBuffer(fileS);
-        }
-
-        function findCol(row, keywords) {
-            const keys = Object.keys(row);
-            for(let kw of keywords) {
-                const found = keys.find(k => k.toLowerCase().includes(kw));
-                if(found) return row[found];
-            }
-            return '';
-        }
-
-        function updateStats() {
-            document.getElementById('statStudents').innerText = studentsDB.length;
-            document.getElementById('statSchools').innerText = schoolsDB.length;
-            document.getElementById('statSubmissions').innerText = submissionsDB.length;
-            
-            // Preview simple
-            document.getElementById('loadedDataPreview').innerHTML = `
-                <div class="alert alert-info">
-                    Base de Datos Local: <br>
-                    <strong>${studentsDB.length}</strong> Estudiantes | 
-                    <strong>${schoolsDB.length}</strong> Escuelas
-                </div>`;
-        }
-
-        function exportData() {
-            if(submissionsDB.length === 0) return alert("No hay registros para exportar");
-            const csv = Papa.unparse(submissionsDB);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "reporte_practicas.csv";
-            link.click();
-        }
-
-        // --- UTILIDADES ---
+    async function procesarArchivos() {
+        const f1 = document.getElementById('fileStudents').files[0];
+        const f2 = document.getElementById('fileSchools').files[0];
         
-        function switchMode(mode) {
-            if(mode === 'admin') {
-                document.getElementById('student-panel').classList.remove('active');
-                document.getElementById('admin-panel').classList.add('active');
-                if(!localStorage.getItem('adminLoggedIn')) {
-                    document.getElementById('adminLogin').classList.remove('hidden');
-                    document.getElementById('adminContent').classList.add('hidden');
-                }
-            } else {
-                document.getElementById('admin-panel').classList.remove('active');
-                document.getElementById('student-panel').classList.add('active');
-            }
+        if(!f1 || !f2 || !URL_SCRIPT) return alert("Faltan archivos o la URL");
+        
+        const status = document.getElementById('uploadStatus');
+        status.classList.remove('hidden');
+        status.innerText = "⏳ Leyendo archivos...";
+        status.className = 'status-msg info';
+
+        try {
+            // 1. Leer Estudiantes
+            const dEst = await leerExcel(f1);
+            const cleanEst = dEst.map(r => ({
+                id: String(findCol(r, 'id') || ''),
+                nombreCompleto: findCol(r, 'nombre') || findCol(r, 'estudiante') || '',
+                correo: findCol(r, 'correo') || '',
+                telefono: String(findCol(r, 'telefono') || findCol(r, 'celular') || '')
+            }));
+
+            // 2. Leer Escuelas
+            const dEsc = await leerExcel(f2);
+            const cleanEsc = dEsc.map(r => ({
+                id: String(findCol(r, 'amie') || findCol(r, 'id') || ''),
+                nombre: findCol(r, 'nombre') || '',
+                distrito: findCol(r, 'distrito') || '',
+                sistema: findCol(r, 'sistema') || ''
+            }));
+
+            status.innerText = "🚀 Subiendo a Google Sheets...";
+            
+            // 3. Subir
+            await subirDatosNube('estudiantes', cleanEst);
+            await subirDatosNube('escuelas', cleanEsc);
+            
+            status.innerText = "✅ ¡Sincronización Completa! Ahora funcionará en celulares.";
+            status.className = 'status-msg success';
+            
+        } catch (e) {
+            console.error(e);
+            status.innerText = "❌ Error: " + e.message;
+            status.className = 'status-msg error';
         }
+    }
 
-        function showStep(n) {
-            for(let i=1; i<=5; i++) {
-                document.getElementById(`step${i}-content`).classList.add('hidden');
-                const indicator = document.getElementById(`step${i}`);
-                indicator.className = 'step';
-                if(i < n) indicator.classList.add('completed');
-                if(i === n) indicator.classList.add('active');
-            }
-            document.getElementById(`step${n}-content`).classList.remove('hidden');
+    function leerExcel(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+                resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function findCol(row, keyPart) {
+        const key = Object.keys(row).find(k => k.toLowerCase().includes(keyPart));
+        return key ? row[key] : null;
+    }
+
+    function setStep(n) {
+        for(let i=1; i<=4; i++) {
+            document.getElementById(`step${i}`).classList.add('hidden');
+            document.getElementById(`d${i}`).classList.remove('active');
         }
+        document.getElementById(`step${n}`).classList.remove('hidden');
+        document.getElementById(`d${n}`).classList.add('active');
+    }
+</script>
 
-        function showAlert(id, msg, type) {
-            document.getElementById(id).innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-        }
-
-        function saveToLocalStorage() {
-            localStorage.setItem('studentsDB', JSON.stringify(studentsDB));
-            localStorage.setItem('schoolsDB', JSON.stringify(schoolsDB));
-            localStorage.setItem('submissionsDB', JSON.stringify(submissionsDB));
-        }
-
-        function loadFromLocalStorage() {
-            studentsDB = JSON.parse(localStorage.getItem('studentsDB') || '[]');
-            schoolsDB = JSON.parse(localStorage.getItem('schoolsDB') || '[]');
-            submissionsDB = JSON.parse(localStorage.getItem('submissionsDB') || '[]');
-        }
-
-        // Listeners visuales para input file
-        document.getElementById('studentFile').onchange = (e) => document.getElementById('studentFileInfo').innerText = e.target.files[0].name;
-        document.getElementById('schoolFile').onchange = (e) => {
-            document.getElementById('schoolFileInfo').innerText = e.target.files[0].name;
-            document.getElementById('processBtn').classList.remove('hidden');
-        };
-
-    </script>
 </body>
 </html>
