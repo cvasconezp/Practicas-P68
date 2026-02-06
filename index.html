@@ -342,6 +342,22 @@
             display: none;
         }
 
+        /* Estilos para radio buttons de MINEDUC */
+        input[type="radio"]:checked + span {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        label:has(input[type="radio"]):hover {
+            border-color: #667eea !important;
+            background: #f8f9ff;
+        }
+
+        label:has(input[type="radio"]:checked) {
+            border-color: #667eea !important;
+            background: #f0f4ff;
+        }
+
         .school-suggestion {
             padding: 12px;
             border: 1px solid #e0e0e0;
@@ -627,6 +643,33 @@
                         <option value="6to nivel - Práctica de servicio comunitario">6to nivel - Práctica de servicio comunitario</option>
                     </select>
                 </div>
+                
+                <div class="form-group" style="background: #f8f9ff; padding: 15px; border-radius: 8px; border: 1px solid #667eea; margin-top: 20px;">
+                    <label for="cuentaMineduc" style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                        ¿Dispones de cuenta en MINEDUC te integra? <span style="color: red;">*</span>
+                    </label>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.5;">
+                        ℹ️ Verifica tu cuenta ingresando tu cédula en: 
+                        <a href="https://aplicaciones.educacion.gob.ec/mineducintegra/#/registroPracticas" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           style="color: #667eea; font-weight: 600; text-decoration: underline;">
+                            MINEDUC te integra - Registro de Prácticas
+                        </a>
+                        <span style="font-size: 12px; color: #888;">(se abre en nueva pestaña)</span>
+                    </p>
+                    <div style="display: flex; gap: 15px; margin-top: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 6px; flex: 1; transition: all 0.3s;">
+                            <input type="radio" name="cuentaMineduc" id="cuentaMineducSi" value="Sí" required style="margin-right: 8px;">
+                            <span style="font-weight: 500;">✅ Sí, tengo cuenta</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 6px; flex: 1; transition: all 0.3s;">
+                            <input type="radio" name="cuentaMineduc" id="cuentaMineducNo" value="No" required style="margin-right: 8px;">
+                            <span style="font-weight: 500;">❌ No, no tengo cuenta</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <button class="btn btn-secondary" onclick="goBackToSearch()">← Atrás</button>
                 <button class="btn btn-primary" onclick="confirmPersonalData()">Guardar y Continuar</button>
             </div>
@@ -1536,6 +1579,7 @@
             const phone = document.getElementById('editPhone').value.trim();
             const centroApoyo = document.getElementById('centroApoyo').value;
             const nivelPractica = document.getElementById('nivelPractica').value;
+            const cuentaMineduc = document.querySelector('input[name="cuentaMineduc"]:checked');
             
             // Validar correo
             if (!email) {
@@ -1585,11 +1629,18 @@
                 return;
             }
 
+            // Validar cuenta MINEDUC
+            if (!cuentaMineduc) {
+                alert('Por favor indica si dispones de cuenta en MINEDUC te integra');
+                return;
+            }
+
             // Actualizar datos en currentStudent
             currentStudent.correo = email;
             currentStudent.telefono = phone;
             currentStudent.centroApoyo = centroApoyo;
             currentStudent.nivelPractica = nivelPractica;
+            currentStudent.cuentaMineduc = cuentaMineduc.value;
             
             // IMPORTANTE: Actualizar también en studentsData para que persista
             const studentIndex = studentsData.findIndex(s => {
@@ -1874,6 +1925,7 @@
                 estudiante_telefono: currentStudent.telefono,
                 estudiante_centro_apoyo: currentStudent.centroApoyo,
                 estudiante_nivel_practica: currentStudent.nivelPractica,
+                estudiante_cuenta_mineduc: currentStudent.cuentaMineduc,
                 escuela_amie: currentSchool.id,
                 escuela_nombre: currentSchool.nombre,
                 escuela_distrito: currentSchool.distrito,
