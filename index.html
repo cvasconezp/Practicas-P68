@@ -803,6 +803,16 @@
         };
 
         function loadDataFromGoogleSheets() {
+            // IMPORTANTE: Limpiar localStorage para evitar errores de cuota
+            try {
+                localStorage.removeItem('studentsData');
+                localStorage.removeItem('schoolsData');
+                localStorage.removeItem('submissionsData');
+                console.log('🧹 localStorage limpiado');
+            } catch (e) {
+                // Ignorar errores de limpieza
+            }
+            
             if (!GOOGLE_SHEETS_URL) {
                 console.log('❌ Google Sheets URL not configured');
                 hideLoadingIndicator();
@@ -1094,21 +1104,15 @@
         }
 
         function loadFromStorage() {
-            const savedStudents = localStorage.getItem('studentsData');
-            const savedSchools = localStorage.getItem('schoolsData');
-            const savedSubmissions = localStorage.getItem('submissionsData');
-
-            if (savedStudents) studentsData = JSON.parse(savedStudents);
-            if (savedSchools) schoolsData = JSON.parse(savedSchools);
-            if (savedSubmissions) submissionsData = JSON.parse(savedSubmissions);
-
+            // DESHABILITADO: No usar localStorage, cargar solo desde Google Sheets
+            // Los datos se cargan automáticamente desde Google Sheets al abrir la página
             updateAdminStats();
         }
 
         function saveToStorage() {
-            localStorage.setItem('studentsData', JSON.stringify(studentsData));
-            localStorage.setItem('schoolsData', JSON.stringify(schoolsData));
-            localStorage.setItem('submissionsData', JSON.stringify(submissionsData));
+            // DESHABILITADO: localStorage excede cuota con muchos datos
+            // Todos los datos se guardan en Google Sheets automáticamente
+            // console.log('💾 Datos en Google Sheets');
         }
 
         // Mode switching
