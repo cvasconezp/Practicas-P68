@@ -695,8 +695,8 @@
                     
                     <div class="form-group">
                         <label for="newSchoolAmie">AMIE de la Escuela: <span style="color: red;">*</span></label>
-                        <input type="text" id="newSchoolAmie" required>
-                        <small style="color: #666; font-size: 12px;">Código AMIE de la institución educativa</small>
+                        <input type="text" id="newSchoolAmie" required maxlength="8" placeholder="Ej: 05H01056" style="text-transform: uppercase;">
+                        <small style="color: #666; font-size: 12px;">8 caracteres: 7 números + 1 letra en posición 3 (Ej: 05H01056)</small>
                     </div>
                     
                     <div class="form-group">
@@ -707,8 +707,8 @@
                     
                     <div class="form-group">
                         <label for="newSchoolDistrito">Distrito: <span style="color: red;">*</span></label>
-                        <input type="text" id="newSchoolDistrito" required>
-                        <small style="color: #666; font-size: 12px;">Distrito educativo</small>
+                        <input type="text" id="newSchoolDistrito" required maxlength="5" placeholder="Ej: 05D02" style="text-transform: uppercase;">
+                        <small style="color: #666; font-size: 12px;">5 caracteres: 4 números + 1 letra en posición 3 (Ej: 05D02)</small>
                     </div>
                     
                     <div class="form-group">
@@ -1319,12 +1319,17 @@
                         console.log('Primer registro completo:', jsonData[0]);
                     }
                     
-                    schoolsData = jsonData.map(row => ({
-                        id: findColumn(row, ['ID escuela', 'ID_escuela', 'id_escuela', 'ID escuelas', 'ID Escuela', 'ID Escuelas']),
-                        nombre: findColumn(row, ['Nombre escuela', 'Nombre_escuela', 'nombre_escuela', 'Nombre Escuela', 'NOMBRE ESCUELA', 'Nombre', 'nombre']),
-                        distrito: findColumn(row, ['Distrito2', 'distrito2', 'DISTRITO2', 'Distrito 2', 'distrito 2']),
-                        sistema: findColumn(row, ['Sistema educativo', 'Sistema_educativo', 'sistema_educativo', 'Sistema Educativo', 'SISTEMA EDUCATIVO', 'Sistema', 'sistema'])
-                    }));
+                    schoolsData = jsonData.map(row => {
+                        const distritoRaw = findColumn(row, ['Distrito2', 'distrito2', 'DISTRITO2', 'Distrito 2', 'distrito 2']);
+                        const distritoFormateado = distritoRaw ? 'Distrito ' + distritoRaw : '';
+                        
+                        return {
+                            id: findColumn(row, ['ID escuela', 'ID_escuela', 'id_escuela', 'ID escuelas', 'ID Escuela', 'ID Escuelas']),
+                            nombre: findColumn(row, ['Nombre escuela', 'Nombre_escuela', 'nombre_escuela', 'Nombre Escuela', 'NOMBRE ESCUELA', 'Nombre', 'nombre']),
+                            distrito: distritoFormateado,
+                            sistema: findColumn(row, ['Sistema educativo', 'Sistema_educativo', 'sistema_educativo', 'Sistema Educativo', 'SISTEMA EDUCATIVO', 'Sistema', 'sistema'])
+                        };
+                    });
                     
                     console.log('Escuelas procesadas:', schoolsData.slice(0, 3));
 
@@ -1799,9 +1804,9 @@
 
         // Guardar nueva escuela
         function saveNewSchool() {
-            const amie = document.getElementById('newSchoolAmie').value.trim();
+            const amie = document.getElementById('newSchoolAmie').value.trim().toUpperCase();
             const nombre = document.getElementById('newSchoolName').value.trim();
-            const distrito = document.getElementById('newSchoolDistrito').value.trim();
+            const distritoRaw = document.getElementById('newSchoolDistrito').value.trim().toUpperCase();
             const sistema = document.getElementById('newSchoolSistema').value;
 
             // Validaciones
@@ -1810,13 +1815,39 @@
                 return;
             }
 
+            // Validar formato AMIE: 8 caracteres, letra en posición 3
+            if (amie.length !== 8) {
+                alert('El código AMIE debe tener exactamente 8 caracteres (Ej: 05H01056)');
+                return;
+            }
+
+            // Validar que posiciones 1,2,4,5,6,7,8 sean números y posición 3 sea letra
+            const amiePattern = /^\d{2}[A-Z]\d{5}$/;
+            if (!amiePattern.test(amie)) {
+                alert('Formato AMIE incorrecto. Debe ser: 2 números + 1 letra + 5 números (Ej: 05H01056)');
+                return;
+            }
+
             if (!nombre) {
                 alert('Por favor ingresa el nombre de la escuela');
                 return;
             }
 
-            if (!distrito) {
+            if (!distritoRaw) {
                 alert('Por favor ingresa el distrito');
+                return;
+            }
+
+            // Validar formato Distrito: 5 caracteres, letra en posición 3
+            if (distritoRaw.length !== 5) {
+                alert('El código de distrito debe tener exactamente 5 caracteres (Ej: 05D02)');
+                return;
+            }
+
+            // Validar que posiciones 1,2,4,5 sean números y posición 3 sea letra
+            const distritoPattern = /^\d{2}[A-Z]\d{2}$/;
+            if (!distritoPattern.test(distritoRaw)) {
+                alert('Formato de distrito incorrecto. Debe ser: 2 números + 1 letra + 2 números (Ej: 05D02)');
                 return;
             }
 
@@ -1827,7 +1858,7 @@
 
             // Verificar que no exista ya
             const exists = schoolsData.find(s => 
-                s.id && String(s.id).toLowerCase() === amie.toLowerCase()
+                s.id && String(s.id).toUpperCase() === amie
             );
 
             if (exists) {
@@ -1835,11 +1866,14 @@
                 return;
             }
 
+            // Formatear distrito con prefijo "Distrito "
+            const distritoFormateado = 'Distrito ' + distritoRaw;
+
             // Crear nueva escuela con formato apropiado
             const newSchool = {
                 id: amie,
                 nombre: formatSchoolName(nombre),
-                distrito: distrito,
+                distrito: distritoFormateado,
                 sistema: sistema
             };
 
