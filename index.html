@@ -523,6 +523,19 @@
                         </div>
                     </div>
                     
+                    <div style="margin-top: 20px; padding: 15px; background: #f0f4ff; border-radius: 8px;">
+                        <h4 style="margin-top: 0; color: #667eea;">🔄 Sincronización Manual</h4>
+                        <p style="font-size: 14px; color: #666;">Si los datos no aparecen en Google Sheets, usa estos botones:</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn btn-primary" onclick="forceSyncStudents()" style="flex: 1;">
+                                📤 Forzar Sync Estudiantes
+                            </button>
+                            <button class="btn btn-primary" onclick="forceSyncSchools()" style="flex: 1;">
+                                📤 Forzar Sync Escuelas
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="data-preview" style="margin-top: 30px;">
                         <h3>🔍 Vista Previa de Datos Cargados</h3>
                         <div id="loadedDataPreview"></div>
@@ -983,6 +996,39 @@
         let isSyncingSchools = false;
         let lastSchoolsSyncTime = 0;
 
+        // Funciones para forzar sincronización (desde panel de admin)
+        function forceSyncStudents() {
+            if (studentsData.length === 0) {
+                alert('⚠️ No hay estudiantes cargados. Por favor carga primero el archivo Excel.');
+                return;
+            }
+            
+            // Resetear flags completamente
+            isSyncingStudents = false;
+            lastStudentsSyncTime = 0;
+            
+            console.log('🔄 Forzando sincronización de estudiantes...');
+            syncStudentsToGoogleSheets();
+            
+            alert(`✅ Sincronizando ${studentsData.length} estudiantes.\n\nVerifica Google Sheets en unos segundos.`);
+        }
+
+        function forceSyncSchools() {
+            if (schoolsData.length === 0) {
+                alert('⚠️ No hay escuelas cargadas. Por favor carga primero el archivo Excel.');
+                return;
+            }
+            
+            // Resetear flags completamente
+            isSyncingSchools = false;
+            lastSchoolsSyncTime = 0;
+            
+            console.log('🔄 Forzando sincronización de escuelas...');
+            syncSchoolsToGoogleSheets();
+            
+            alert(`✅ Sincronizando ${schoolsData.length} escuelas.\n\nVerifica Google Sheets en unos segundos.`);
+        }
+
         function syncSchoolsToGoogleSheets() {
             // Evitar sincronizaciones duplicadas
             const now = Date.now();
@@ -1370,8 +1416,19 @@
                     }
                     
                     schoolsData = jsonData.map(row => {
-                        const distritoRaw = findColumn(row, ['Distrito2', 'distrito2', 'DISTRITO2', 'Distrito 2', 'distrito 2']);
-                        const distritoFormateado = distritoRaw ? 'Distrito ' + distritoRaw : '';
+                        let distritoRaw = findColumn(row, ['Distrito2', 'distrito2', 'DISTRITO2', 'Distrito 2', 'distrito 2']);
+                        
+                        // Si el distrito ya contiene "Distrito", no agregarlo
+                        let distritoFormateado = '';
+                        if (distritoRaw) {
+                            if (distritoRaw.toLowerCase().includes('distrito')) {
+                                // Ya tiene "Distrito", usar tal cual
+                                distritoFormateado = distritoRaw;
+                            } else {
+                                // No tiene "Distrito", agregarlo
+                                distritoFormateado = 'Distrito ' + distritoRaw;
+                            }
+                        }
                         
                         return {
                             id: findColumn(row, ['ID escuela', 'ID_escuela', 'id_escuela', 'ID escuelas', 'ID Escuela', 'ID Escuelas']),
@@ -1440,13 +1497,26 @@
             
             // Sincronizar con Google Sheets si está configurado
             if (GOOGLE_SHEETS_URL) {
+                // Resetear flags para permitir sincronización desde admin
+                isSyncingStudents = false;
+                isSyncingSchools = false;
+                lastStudentsSyncTime = 0;
+                lastSchoolsSyncTime = 0;
+                
+                console.log('🔄 Iniciando sincronización desde panel de admin...');
+                
                 syncStudentsToGoogleSheets();
-                syncSchoolsToGoogleSheets();
+                
+                // Esperar un poco antes de sincronizar escuelas
+                setTimeout(() => {
+                    syncSchoolsToGoogleSheets();
+                }, 1000);
                 
                 alert(`¡Datos cargados exitosamente!\n\n` +
                       `Estudiantes: ${studentsData.length}\n` +
                       `Escuelas: ${schoolsData.length}\n\n` +
-                      `✅ Los datos se han sincronizado con Google Sheets y estarán disponibles en cualquier navegador.`);
+                      `✅ Los datos se están sincronizando con Google Sheets.\n` +
+                      `Espera unos segundos y verifica la hoja.`);
             } else {
                 alert(`¡Datos cargados exitosamente!\n\n` +
                       `Estudiantes: ${studentsData.length}\n` +
