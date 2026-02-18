@@ -911,12 +911,31 @@
             }
         };
 
+        // Flags para evitar sincronizaciones múltiples simultáneas
+        let isSyncingStudents = false;
+        let lastStudentsSyncTime = 0;
+
         function syncStudentsToGoogleSheets() {
+            // Evitar sincronizaciones duplicadas
+            const now = Date.now();
+            if (isSyncingStudents) {
+                console.log('⏳ Ya hay una sincronización de estudiantes en curso, ignorando...');
+                return;
+            }
+            
+            // Evitar sincronizar más de una vez cada 5 segundos
+            if (now - lastStudentsSyncTime < 5000) {
+                console.log('⏸️ Sincronización de estudiantes muy reciente, ignorando...');
+                return;
+            }
+            
             if (!GOOGLE_SHEETS_URL || studentsData.length === 0) {
                 return;
             }
 
-            console.log('📤 Sincronizando estudiantes con Google Sheets...');
+            isSyncingStudents = true;
+            lastStudentsSyncTime = now;
+            console.log('📤 Sincronizando', studentsData.length, 'estudiantes con Google Sheets...');
 
             // Crear un formulario oculto para enviar datos via POST
             const form = document.createElement('form');
@@ -949,16 +968,42 @@
             form.submit();
             console.log('✅ Estudiantes enviados a Google Sheets');
 
+            // Liberar el flag después de 3 segundos
+            setTimeout(() => {
+                form.remove();
+                isSyncingStudents = false;
+                console.log('🔓 Sincronización de estudiantes liberada');
+            }, 3000);
+
             // Limpiar el formulario después de enviar
             setTimeout(() => form.remove(), 1000);
         }
 
+        // Flags para escuelas
+        let isSyncingSchools = false;
+        let lastSchoolsSyncTime = 0;
+
         function syncSchoolsToGoogleSheets() {
+            // Evitar sincronizaciones duplicadas
+            const now = Date.now();
+            if (isSyncingSchools) {
+                console.log('⏳ Ya hay una sincronización de escuelas en curso, ignorando...');
+                return;
+            }
+            
+            // Evitar sincronizar más de una vez cada 5 segundos
+            if (now - lastSchoolsSyncTime < 5000) {
+                console.log('⏸️ Sincronización de escuelas muy reciente, ignorando...');
+                return;
+            }
+            
             if (!GOOGLE_SHEETS_URL || schoolsData.length === 0) {
                 return;
             }
 
-            console.log('📤 Sincronizando escuelas con Google Sheets...');
+            isSyncingSchools = true;
+            lastSchoolsSyncTime = now;
+            console.log('📤 Sincronizando', schoolsData.length, 'escuelas con Google Sheets...');
 
             // Crear un formulario oculto para enviar datos via POST
             const form = document.createElement('form');
@@ -991,7 +1036,12 @@
             form.submit();
             console.log('✅ Escuelas enviadas a Google Sheets');
 
-            // Limpiar el formulario después de enviar
+            // Limpiar el formulario después de enviar y liberar flag
+            setTimeout(() => {
+                form.remove();
+                isSyncingSchools = false;
+                console.log('🔓 Sincronización de escuelas liberada');
+            }, 3000);
             setTimeout(() => form.remove(), 1000);
         }
 
